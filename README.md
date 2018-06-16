@@ -54,6 +54,17 @@ docker run -it -p 8080:8080 --name actuator dockerdonegal/helloworld:v2
 ## run 
 docker run -v "$PWD":/project -w /project maven:3.3.9-jdk-8 mvn test
 
+|---------|
+  GITLAB
+|---------|
+
+open browser at localhost, or if you set up your host file to rediret to http://ci-cd.dockerdonegal.ie.
+login to gitlab, if first time you will be prompt for a new password, create one and reenter it (ddpassword).
+Create a group, in my case I created group name (dd)
+Create a project then click on the import project and then click github, you will need a Public Access Token you can create one from here https://github.com/settings/tokens on your github page, git it a meaningful name.
+Import your project.
+Next you will have a warning message about not allow to commit until you add an ssh key, if you have one already generated you can fine it at ~/.ssh/id_rsa.pub on linux machines.
+
 
 |---------|
   JENKINS
