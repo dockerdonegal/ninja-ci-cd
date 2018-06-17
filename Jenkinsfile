@@ -26,7 +26,7 @@ pipeline {
     stage('Docker Build') {
       agent any
       steps {
-        sh 'docker build -t dockerdonegal/helloworld:v3 .'
+        sh 'docker build -t dockerdonegal/helloworld:v4 .'
       }
     }
     stage('Docker Push') {
@@ -34,7 +34,16 @@ pipeline {
       steps {
         withCredentials([usernamePassword(credentialsId: 'dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]) {
           sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPassword}"
-          sh 'docker push dockerdonegal/helloworld:v3'
+          sh 'docker push dockerdonegal/helloworld:v4'
+        }
+      }
+    }
+    stage('Docker Clean') {
+      agent any
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]) {
+          sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPassword}"
+          sh 'docker push dockerdonegal/helloworld:v4'
         }
       }
     }
@@ -43,14 +52,27 @@ pipeline {
       steps {
         withCredentials([usernamePassword(credentialsId: 'dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]) {
           sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPassword}"
-          sh 'docker pull dockerdonegal/helloworld:v3'
+          sh 'docker pull dockerdonegal/helloworld:v4'
         }
       }
     }
     stage('Docker Deploy STG') {
       agent any
       steps {
-          sh "docker run -p 85:8080 dockerdonegal/helloworld:v3"
+          sh "docker run -d -p 85:8080 dockerdonegal/helloworld:v4"
+      }
+    }
+    stage('Integration/E2E Tests') {
+      agent any
+      steps {
+          sh 'echo ADDSTEP - Integration/E2E Tests'
+
+      }
+    }
+    stage('Deploy PROD') {
+      agent any
+      steps {
+          sh "docker run -d -p 82:8080 dockerdonegal/helloworld:v4"
       }
     }
   }
