@@ -1,67 +1,99 @@
-version: '3.2'
+version: '3.6'
+
+# TODO Replace any javapi or dockerdonegal entry with your dockerhub account
 services:
-  # sonarqube:
-  #   build:
-  #     context: sonarqube/
-  #   ports:
-  #     - 9000:9000
-  #   container_name: sonarqube
-  #   environment:
-  #     - SONARQUBE_JDBC_URL=jdbc:postgresql://postgresdb:5432/sonar
-  #   volumes:
-  #     - ./data/sonar/sonarqube/conf:/opt/sonarqube/conf
-  #     - ./data/sonar/sonarqube/data:/opt/sonarqube/data
-  #     - ./data/sonar/sonarqube/extensions:/opt/sonarqube/extensions
+  #  sonarqube:
+  #    image: javapi/dd-sonarqube:latest
+  #    ports:
+  #      - 9000:9000
+  #    deploy:
+  #      replicas: 1
+  #      restart_policy:
+  #        condition: any
+  #    networks:
+  #    - dd-network
+  #    environment:
+  #      - SONARQUBE_JDBC_URL=jdbc:postgresql://postgresdb:5432/sonar
+  #      - SONARQUBE_JDBC_USERNAME=sonar
+  #      - SONARQUBE_JDBC_PASSWORD=sonar
+  #    volumes:
+  #      - sonarqube_conf:/opt/sonarqube/conf
+  #      - sonarqube_data:/opt/sonarqube/data
+  #      - sonarqube_extensions:/opt/sonarqube/extensions
+  #      - sonarqube_bundled_plugins:/opt/sonarqube/lib/bundled-plugin
 
-  # postgresdb:
-  #   build:
-  #     context: postgres/
-  #   #image: postgres
-  #   container_name: postgresdb
-  #   environment:
-  #     - POSTGRES_USER=sonar
-  #     - POSTGRES_PASSWORD=sonar
-  #   volumes:
-  #     - ./data/postgresql:/var/lib/postgresql
-  #     # This needs explicit mapping due to https://github.com/docker-library/postgres/blob/4e48e3228a30763913ece952c611e5e9b95c8759/Dockerfile.template#L52
-  #     - ./data/postgresql_data:/var/lib/postgresql/data
+  #  postgresdb:
+  #    image: javapi/dd-postgres:latest
+  #    deploy:
+  #      replicas: 1
+  #      restart_policy:
+  #        condition: any
+  #    networks:
+  #    - dd-network
+  #    environment:
+  #      - POSTGRES_USER=sonar
+  #      - POSTGRES_PASSWORD=sonar
+  #    volumes:
+  #      - postgresql:/var/lib/postgresql
+  #      # This needs explicit mapping due to https://github.com/docker-library/postgres/blob/4e48e3228a30763913ece952c611e5e9b95c8759/Dockerfile.template#L52
+  #      - postgresql_data:/var/lib/postgresql/data
 
-  jenkins:
-    build:
-      context: jenkins/
-    #privileged: true
-    #user: root
-    ports:
-      - 8080:8080
-      #- 50000:50000
-    container_name: jenkins
-    # environment:
-    #   - DOCKER_OPTS="-H tcp://0.0.0.0:2376 -H unix:///var/run/docker.sock"
-    volumes:
-      - ./data/jenkins:/var/jenkins_home #Remember that, the tmp directory is designed to be wiped on system reboot.
-      - /var/run/docker.sock:/var/run/docker.sock
-      #- ${DOCKER_PATH}:/usr/bin/docker:ro
-    # depends_on:
-    #   - sonarqube
+   jenkins:
+     image: dockerdonegal/dd-jenkins:latest
+     user: root
+     ports:
+       - 8080:8080
+     deploy:
+       replicas: 1
+       restart_policy:
+         condition: any
+    #  configs:
+    #    - source: jenkins-custom-credentials
+    #      target: /usr/share/jenkins/ref/init.groovy.d/custom.groovy
+     networks:
+     - dd-network
+     volumes:
+       - dd_jenkins_home:/var/jenkins_home #Remember that, the tmp directory is designed to be wiped on system reboot.
+       - /var/run/docker.sock:/var/run/docker.sock
 
-  gitlab-ce:
-    build:
-      context: gitlab-ce/
-    restart: always
-    hostname: 'ci-cd.dockerdonegal.ie'
-    environment:
-      GITLAB_OMNIBUS_CONFIG: |
-        external_url 'http://ci-cd.dockerdonegal.ie'
-    ports:
-      - '80:80'
-    #  - '22:22'
-    container_name: gitlab-ce
-    volumes:
-      - './data/gitlab/config:/etc/gitlab'
-      - './data/gitlab/logs:/var/log/gitlab'
-      - './data/gitlab/data:/var/opt/gitlab'
+  #  mongodb:
+  #    image: javapi/dd-mongo:latest
+  #    deploy:
+  #      replicas: 1
+  #      restart_policy:
+  #        condition: any
+  #    networks:
+  #    - dd-network
+  #    environment:
+  #      - MONGO_DATA_DIR=/data/db
+  #      - MONGO_LOG_DIR=/dev/null
+  #      - APPLICATION_USER=ninja
+  #      - APPLICATION_DATABASE=ninja
+  #      - APPLICATION_PASS=ninja
+  #      - MONGODB_ADMIN_USER=admin
+  #      - MONGODB_ADMIN_PASS=admin
+  #    volumes:
+  #      - mongo:/data/db
+  #    ports:
+  #      - 27017:27017
+  #    command: --smallfiles
 
-networks: 
-  default:
-    external:
-      name: dd_ninja
+networks:
+  dd-network:
+    external: true
+
+volumes:
+  dd_jenkins_home:
+  # postgresql:
+  # postgresql_data:
+  # sonarqube_bundled_plugins:
+  # sonarqube_conf:
+  # sonarqube_data:
+  # sonarqube_extensions:
+  # mongo:
+
+# configs:
+#   # jenkins-cicd_credentials:
+#   #   file: /jenkins/credentials.xml
+#   jenkins-custom-credentials:
+#     file: ./jenkins/custom.groovy

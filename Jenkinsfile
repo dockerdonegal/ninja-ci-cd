@@ -26,7 +26,7 @@ pipeline {
     stage('Docker Build') {
       agent any
       steps {
-        sh 'docker build -t dockerdonegal/helloworld:v2 .'
+        sh 'docker build -t dockerdonegal/helloworld:v3 .'
       }
     }
     stage('Docker Push') {
@@ -34,8 +34,23 @@ pipeline {
       steps {
         withCredentials([usernamePassword(credentialsId: 'dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]) {
           sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPassword}"
-          sh 'docker push dockerdonegal/helloworld:v2'
+          sh 'docker push dockerdonegal/helloworld:v3'
         }
+      }
+    }
+    stage('Docker Pull') {
+      agent any
+      steps {
+        withCredentials([usernamePassword(credentialsId: 'dockerHub', passwordVariable: 'dockerHubPassword', usernameVariable: 'dockerHubUser')]) {
+          sh "docker login -u ${env.dockerHubUser} -p ${env.dockerHubPassword}"
+          sh 'docker pull dockerdonegal/helloworld:v3'
+        }
+      }
+    }
+    stage('Docker Deploy STG') {
+      agent any
+      steps {
+          sh "docker run -p 85:8080 dockerdonegal/helloworld:v3"
       }
     }
   }
